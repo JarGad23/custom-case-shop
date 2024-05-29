@@ -22,9 +22,9 @@ export const Phone = ({ imgSrc, dark = false, className, ...props }: Props) => {
             ? "/phone-template-dark-edges.png"
             : "/phone-template-white-edges.png"
         }
-        width={300}
-        height={300}
-        className="pointer-events-none z-50 select-none"
+        width={200}
+        height={200}
+        className="w-full pointer-events-none z-50 select-none"
         alt="phone image"
       />
       <div className="absolute -z-10 inset-0">
