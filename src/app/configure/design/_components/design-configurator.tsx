@@ -3,13 +3,23 @@
 import Image from "next/image";
 import { useState } from "react";
 import { Rnd } from "react-rnd";
-import { Check, ChevronsUpDown } from "lucide-react";
+import { ArrowRight, Check, ChevronsUpDown } from "lucide-react";
 import { HandleComponent } from "./handle-component";
-import { cn } from "@/lib/utils";
+import { cn, formatPrice } from "@/lib/utils";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Radio, RadioGroup } from "@headlessui/react";
-import { COLORS, MODELS } from "@/validators/option-validator";
+import {
+  Radio,
+  RadioGroup,
+  Label as RadioLabel,
+  Description as RadioDescription,
+} from "@headlessui/react";
+import {
+  COLORS,
+  FINISHES,
+  MATERIALS,
+  MODELS,
+} from "@/validators/option-validator";
 import { Label } from "@/components/ui/label";
 import {
   DropdownMenu,
@@ -18,6 +28,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
+import { BASE_PRICE } from "@/config/products";
 
 type Props = {
   configId: string;
@@ -31,6 +42,8 @@ type Props = {
 type Options = {
   color: (typeof COLORS)[number];
   model: (typeof MODELS.options)[number];
+  material: (typeof MATERIALS.options)[number];
+  finish: (typeof FINISHES.options)[number];
 };
 
 export const DesignConfigurator = ({
@@ -41,10 +54,12 @@ export const DesignConfigurator = ({
   const [options, setOptions] = useState<Options>({
     color: COLORS[0],
     model: MODELS.options[0],
+    material: MATERIALS.options[0],
+    finish: FINISHES.options[0],
   });
 
   return (
-    <div className="relative mt-20 grid grid-cols-3 mb-20 pb-20">
+    <div className="relative mt-20 grid grid-cols-1 lg:grid-cols-3 mb-20 pb-20">
       <div className="relative h-[37.5rem] overflow-hidden col-span-2 w-full max-w-4xl flex items-center justify-center rounded-lg border-2 border-dashed border-gray-300 p-12 text-center focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">
         <div className="relative w-60 bg-opacity-50 pointer-events-none aspect-[896/1831]">
           <AspectRatio
@@ -92,7 +107,7 @@ export const DesignConfigurator = ({
           </div>
         </Rnd>
       </div>
-      <div className="h-[37.5rem] flex flex-col bg-white">
+      <div className="h-[37.5rem] w-full col-span-full lg:col-span-1 flex flex-col bg-white">
         <ScrollArea className="relative flex-1 overflow-auto">
           <div
             aria-hidden="true"
@@ -181,10 +196,89 @@ export const DesignConfigurator = ({
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>
+                {[MATERIALS, FINISHES].map(
+                  ({ name, options: selectableOptions }) => (
+                    <RadioGroup
+                      key={name}
+                      value={options[name]}
+                      onChange={(value) => {
+                        setOptions((prev) => ({
+                          ...prev,
+                          [name]: value,
+                        }));
+                      }}
+                    >
+                      <Label>
+                        {name.slice(0, 1).toUpperCase() + name.slice(1)}
+                      </Label>
+                      <div className="mt-3 space-y-4">
+                        {selectableOptions.map((option) => (
+                          <Radio
+                            key={option.value}
+                            value={option}
+                            className={({ checked, focus }) =>
+                              cn(
+                                "relative block cursor-pointer rounded-lg bg-white px-6 py-4 shadow-sm border-2 border-zinc-200 focus:outline-none ring-0 focus:ring-0 outline-none sm:flex sm:justify-between",
+                                {
+                                  "border-primary": checked || focus,
+                                }
+                              )
+                            }
+                          >
+                            <span className="flex items-center">
+                              <span className="flex flex-col text-sm">
+                                <RadioLabel
+                                  className="font-medium text-gray-900"
+                                  as="span"
+                                >
+                                  {option.label}
+                                </RadioLabel>
+                                {option.description ? (
+                                  <RadioDescription
+                                    as="span"
+                                    className="text-gray-500"
+                                  >
+                                    <span className="block sm:inline">
+                                      {option.description}
+                                    </span>
+                                  </RadioDescription>
+                                ) : null}
+                              </span>
+                            </span>
+                            <RadioDescription
+                              as="span"
+                              className="mt-2 flex text-sm sm:ml-4 sm:mt-0 sm:flex-col sm:text-right"
+                            >
+                              <span className="text-gray-900 font-medium">
+                                {formatPrice(option.price / 100)}
+                              </span>
+                            </RadioDescription>
+                          </Radio>
+                        ))}
+                      </div>
+                    </RadioGroup>
+                  )
+                )}
               </div>
             </div>
           </div>
         </ScrollArea>
+        <div className="w-full px-8 h-16 bg-white">
+          <div className="h-px w-full bg-zinc-200" />
+          <div className="w-full h-full flex justify-end items-center">
+            <div className="w-full flex gap-6 items-center">
+              <p className="font-medium whitespace-nowrap">
+                {formatPrice(
+                  (BASE_PRICE + options.finish.price + options.material.price) /
+                    100
+                )}
+              </p>
+              <Button size="sm" className="w-full">
+                Continue <ArrowRight className="h-4 w-4 ml-1.5 inline" />
+              </Button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
