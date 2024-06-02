@@ -82,10 +82,8 @@ export default function Home() {
                     src="/users/user-4.jpg"
                     alt="user image"
                   />
-                  <Image
-                    height={40}
-                    width={40}
-                    className="inline-block object-cover rounded-full ring-2 ring-slate-100"
+                  <img
+                    className="w-10 h-10 inline-block rounded-full ring-2 ring-slate-100 object-cover"
                     src="/users/user-5.jpg"
                     alt="user image"
                   />
