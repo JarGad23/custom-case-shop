@@ -1,11 +1,11 @@
 "use client";
 
-import Image from "next/image";
-import { useState } from "react";
+import NextImage from "next/image";
+import { ElementRef, useState, useRef } from "react";
 import { Rnd } from "react-rnd";
 import { ArrowRight, Check, ChevronsUpDown } from "lucide-react";
 import { HandleComponent } from "./handle-component";
-import { cn, formatPrice } from "@/lib/utils";
+import { base64ToBlob, cn, formatPrice } from "@/lib/utils";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
@@ -29,6 +29,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { BASE_PRICE } from "@/config/products";
+import { useUploadThing } from "@/lib/uploadthing";
+import { useToast } from "@/components/ui/use-toast";
 
 type Props = {
   configId: string;
@@ -46,27 +48,111 @@ type Options = {
   finish: (typeof FINISHES.options)[number];
 };
 
+type RenderedDimension = {
+  width: number;
+  height: number;
+};
+
+type RenderedPosition = {
+  x: number;
+  y: number;
+};
+
 export const DesignConfigurator = ({
   configId,
   imageDimensions,
   imageUrl,
 }: Props) => {
+  const { toast } = useToast();
   const [options, setOptions] = useState<Options>({
     color: COLORS[0],
     model: MODELS.options[0],
     material: MATERIALS.options[0],
     finish: FINISHES.options[0],
   });
+  const [renderedDimension, setRenderedDimension] = useState<RenderedDimension>(
+    {
+      width: imageDimensions.width / 4,
+      height: imageDimensions.height / 4,
+    }
+  );
+
+  const [renderedPosition, setRenderedPosition] = useState<RenderedPosition>({
+    x: 150,
+    y: 205,
+  });
+
+  const containerRef = useRef<ElementRef<"div">>(null);
+  const phoneCaseRef = useRef<ElementRef<"div">>(null);
+
+  const { startUpload } = useUploadThing("imageUploader");
+
+  const saveConfiguration = async () => {
+    try {
+      const {
+        left: caseLeft,
+        top: caseTop,
+        width,
+        height,
+      } = phoneCaseRef.current!.getBoundingClientRect();
+
+      const { left: containerLeft, top: containerTop } =
+        containerRef.current!.getBoundingClientRect();
+
+      const leftOffset = caseLeft - containerLeft;
+      const topOffset = caseTop - containerTop;
+
+      const actualX = renderedPosition.x - leftOffset;
+      const actualY = renderedPosition.y - topOffset;
+
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d");
+
+      const userImage = new Image();
+      userImage.crossOrigin = "anonymous";
+      userImage.src = imageUrl;
+      await new Promise((resolve) => (userImage.onload = resolve));
+
+      ctx?.drawImage(
+        userImage,
+        actualX,
+        actualY,
+        renderedDimension.width,
+        renderedDimension.height
+      );
+
+      const base64 = canvas.toDataURL();
+      const base64Data = base64.split(",")[1];
+
+      const blob = base64ToBlob(base64Data, "image/png");
+      const file = new File([blob], "filename.png", { type: "image/png" });
+
+      await startUpload([file], { configId });
+    } catch (error) {
+      toast({
+        title: "Something went wrong",
+        description:
+          "There was a problem saving your config, please try again.",
+        variant: "destructive",
+      });
+    }
+  };
 
   return (
     <div className="relative mt-20 grid grid-cols-1 lg:grid-cols-3 mb-20 pb-20">
-      <div className="relative h-[37.5rem] overflow-hidden col-span-2 w-full max-w-4xl flex items-center justify-center rounded-lg border-2 border-dashed border-gray-300 p-12 text-center focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">
+      <div
+        ref={containerRef}
+        className="relative h-[37.5rem] overflow-hidden col-span-2 w-full max-w-4xl flex items-center justify-center rounded-lg border-2 border-dashed border-gray-300 p-12 text-center focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+      >
         <div className="relative w-60 bg-opacity-50 pointer-events-none aspect-[896/1831]">
           <AspectRatio
+            ref={phoneCaseRef}
             ratio={896 / 1831}
             className="pointer-events-none relative z-50 aspect-[896/1831] w-full"
           >
-            <Image
+            <NextImage
               alt="phone image"
               src="/phone-template.png"
               className="pointer-events-none z-50 select-none"
@@ -88,6 +174,17 @@ export const DesignConfigurator = ({
             height: imageDimensions.height / 4,
             width: imageDimensions.width / 4,
           }}
+          onResizeStop={(_, __, ref, ____, { x, y }) => {
+            setRenderedDimension({
+              width: parseInt(ref.style.width.slice(0, -2)),
+              height: parseInt(ref.style.height.slice(0, -2)),
+            });
+            setRenderedPosition({ x, y });
+          }}
+          onDragStop={(_, data) => {
+            const { x, y } = data;
+            setRenderedPosition({ x, y });
+          }}
           lockAspectRatio
           resizeHandleComponent={{
             bottomRight: <HandleComponent />,
@@ -98,7 +195,7 @@ export const DesignConfigurator = ({
           className="absolute z-20 border-[3px] border-zinc-600"
         >
           <div className="relative h-full w-full">
-            <Image
+            <NextImage
               src={imageUrl}
               alt="your image"
               fill
@@ -273,7 +370,11 @@ export const DesignConfigurator = ({
                     100
                 )}
               </p>
-              <Button size="sm" className="w-full">
+              <Button
+                size="sm"
+                className="w-full"
+                onClick={() => saveConfiguration()}
+              >
                 Continue <ArrowRight className="h-4 w-4 ml-1.5 inline" />
               </Button>
             </div>
