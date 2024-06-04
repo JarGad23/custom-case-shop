@@ -396,6 +396,8 @@ export const DesignConfigurator = ({
                 size="sm"
                 className="w-full"
                 disabled={isPending}
+                isLoading={isPending}
+                loadingText="Saving..."
                 onClick={() =>
                   saveUserConfiguration({
                     color: options.color.value,
@@ -406,16 +408,7 @@ export const DesignConfigurator = ({
                   })
                 }
               >
-                {isPending ? (
-                  <>
-                    Saving...
-                    <Loader2 className="h-4 w-4 ml-1.5 animate-spin" />
-                  </>
-                ) : (
-                  <>
-                    Continue <ArrowRight className="h-4 w-4 ml-1.5 inline" />
-                  </>
-                )}
+                Continue <ArrowRight className="h-4 w-4 ml-1.5 inline" />
               </Button>
             </div>
           </div>

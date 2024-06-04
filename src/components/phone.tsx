@@ -32,7 +32,7 @@ export const Phone = ({ imgSrc, dark = false, className, ...props }: Props) => {
           src={imgSrc}
           fill
           alt="overlaying phone image"
-          className="object-cover"
+          className="object-cover min-w-full min-h-full"
         />
       </div>
     </div>
