@@ -3,7 +3,7 @@
 import NextImage from "next/image";
 import { ElementRef, useState, useRef } from "react";
 import { Rnd } from "react-rnd";
-import { ArrowRight, Check, ChevronsUpDown } from "lucide-react";
+import { ArrowRight, Check, ChevronsUpDown, Loader2 } from "lucide-react";
 import { HandleComponent } from "./handle-component";
 import { base64ToBlob, cn, formatPrice } from "@/lib/utils";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
@@ -31,6 +31,9 @@ import { Button } from "@/components/ui/button";
 import { BASE_PRICE } from "@/config/products";
 import { useUploadThing } from "@/lib/uploadthing";
 import { useToast } from "@/components/ui/use-toast";
+import { useMutation } from "@tanstack/react-query";
+import { SaveConfigProps, saveConfig } from "../actions";
+import { useRouter } from "next/navigation";
 
 type Props = {
   configId: string;
@@ -64,6 +67,25 @@ export const DesignConfigurator = ({
   imageUrl,
 }: Props) => {
   const { toast } = useToast();
+  const router = useRouter();
+
+  const { mutate: saveUserConfiguration, isPending } = useMutation({
+    mutationKey: ["save-config"],
+    mutationFn: async (options: SaveConfigProps) => {
+      await Promise.all([saveConfiguration(), saveConfig(options)]);
+    },
+    onError: () => {
+      toast({
+        title: "Something went wrong",
+        description: "There was an error on our end. Please try again.",
+        variant: "destructive",
+      });
+    },
+    onSuccess: () => {
+      router.push(`/configure/preview?id=${configId}`);
+    },
+  });
+
   const [options, setOptions] = useState<Options>({
     color: COLORS[0],
     model: MODELS.options[0],
@@ -373,9 +395,27 @@ export const DesignConfigurator = ({
               <Button
                 size="sm"
                 className="w-full"
-                onClick={() => saveConfiguration()}
+                disabled={isPending}
+                onClick={() =>
+                  saveUserConfiguration({
+                    color: options.color.value,
+                    finish: options.finish.value,
+                    material: options.material.value,
+                    model: options.model.value,
+                    configId,
+                  })
+                }
               >
-                Continue <ArrowRight className="h-4 w-4 ml-1.5 inline" />
+                {isPending ? (
+                  <>
+                    Saving...
+                    <Loader2 className="h-4 w-4 ml-1.5 animate-spin" />
+                  </>
+                ) : (
+                  <>
+                    Continue <ArrowRight className="h-4 w-4 ml-1.5 inline" />
+                  </>
+                )}
               </Button>
             </div>
           </div>
