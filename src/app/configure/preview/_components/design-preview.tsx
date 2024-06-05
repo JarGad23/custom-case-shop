@@ -13,6 +13,8 @@ import Confetti from "react-dom-confetti";
 import { createCheckoutSession } from "../actions";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/components/ui/use-toast";
+import { useKindeBrowserClient } from "@kinde-oss/kinde-auth-nextjs";
+import { LoginModal } from "@/components/login-modal";
 
 type Props = {
   configuration: Configuration;
@@ -21,6 +23,14 @@ type Props = {
 export const DesingPreview = ({ configuration }: Props) => {
   const router = useRouter();
   const { toast } = useToast();
+  const { user } = useKindeBrowserClient();
+
+  const [showConfetti, setShowConfetti] = useState(false);
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+
+  useEffect(() => {
+    setShowConfetti(true);
+  }, []);
 
   const { mutate: createPaymentSession, isPending } = useMutation({
     mutationKey: ["get-checkout-session"],
@@ -40,11 +50,15 @@ export const DesingPreview = ({ configuration }: Props) => {
       });
     },
   });
-  const [showConfetti, setShowConfetti] = useState(false);
 
-  useEffect(() => {
-    setShowConfetti(true);
-  }, []);
+  const handleCheckout = () => {
+    if (user) {
+      createPaymentSession({ configId: configuration.id });
+    } else {
+      localStorage.setItem("configurationId", configuration.id);
+      setIsLoginModalOpen(true);
+    }
+  };
 
   const { color, model, finish, material } = configuration;
 
@@ -74,6 +88,8 @@ export const DesingPreview = ({ configuration }: Props) => {
           config={{ elementCount: 200, spread: 90 }}
         />
       </div>
+
+      <LoginModal isOpen={isLoginModalOpen} setIsOpen={setIsLoginModalOpen} />
 
       <div className="mt-20 flex flex-col items-center md:grid text-sm sm:grid-cols-12 sm:grid-rows-1 sm:gap-x-6 md:gap-x-8 lg:gap-x-12">
         <div className="md:col-span-5 lg:col-span-3 md:row-span-2 md:row-end-2">
@@ -154,9 +170,7 @@ export const DesingPreview = ({ configuration }: Props) => {
 
             <div className="mt-8 flex justify-end pb-12">
               <Button
-                onClick={() =>
-                  createPaymentSession({ configId: configuration.id })
-                }
+                onClick={handleCheckout}
                 disabled={isPending}
                 isLoading={isPending}
                 loadingText="Processing..."
