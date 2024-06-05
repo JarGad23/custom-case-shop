@@ -397,7 +397,7 @@ export const DesignConfigurator = ({
                 className="w-full"
                 disabled={isPending}
                 isLoading={isPending}
-                loadingText="Saving..."
+                loadingText="Saving"
                 onClick={() =>
                   saveUserConfiguration({
                     color: options.color.value,
