@@ -6,15 +6,40 @@ import { BASE_PRICE, PRODUCT_PRICES } from "@/config/products";
 import { cn, formatPrice } from "@/lib/utils";
 import { COLORS, MODELS } from "@/validators/option-validator";
 import { Configuration } from "@prisma/client";
+import { useMutation } from "@tanstack/react-query";
 import { ArrowRight, Check } from "lucide-react";
 import { useEffect, useState } from "react";
 import Confetti from "react-dom-confetti";
+import { createCheckoutSession } from "../actions";
+import { useRouter } from "next/navigation";
+import { useToast } from "@/components/ui/use-toast";
 
 type Props = {
   configuration: Configuration;
 };
 
 export const DesingPreview = ({ configuration }: Props) => {
+  const router = useRouter();
+  const { toast } = useToast();
+
+  const { mutate: createPaymentSession, isPending } = useMutation({
+    mutationKey: ["get-checkout-session"],
+    mutationFn: createCheckoutSession,
+    onSuccess: ({ url }) => {
+      if (url) {
+        router.push(url);
+      } else {
+        throw new Error("Unable to retrieve payment Url.");
+      }
+    },
+    onError: () => {
+      toast({
+        title: "Something went wrong",
+        description: "There was an error on our end. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
   const [showConfetti, setShowConfetti] = useState(false);
 
   useEffect(() => {
@@ -128,7 +153,15 @@ export const DesingPreview = ({ configuration }: Props) => {
             </div>
 
             <div className="mt-8 flex justify-end pb-12">
-              <Button className="px-4 sm:px-6 lg:px-8">
+              <Button
+                onClick={() =>
+                  createPaymentSession({ configId: configuration.id })
+                }
+                disabled={isPending}
+                isLoading={isPending}
+                loadingText="Processing..."
+                className="px-4 sm:px-6 lg:px-8"
+              >
                 Checkout <ArrowRight className="h-4 w-4 ml-1.5 inline" />
               </Button>
             </div>
