@@ -82,7 +82,9 @@ export default function Home() {
                     src="/users/user-4.jpg"
                     alt="user image"
                   />
-                  <img
+                  <Image
+                    height={40}
+                    width={40}
                     className="w-10 h-10 inline-block rounded-full ring-2 ring-slate-100 object-cover"
                     src="/users/user-5.jpg"
                     alt="user image"
@@ -147,13 +149,13 @@ export default function Home() {
             <Testimonial
               text={
                 <p>
-                  "The case feels durable and I even got a compliment on the
-                  design. Had the case for two and a half months now and{" "}
+                  &quot;The case feels durable and I even got a compliment on
+                  the design. Had the case for two and a half months now and{" "}
                   <span className="p-0.5 bg-slate-800 text-white">
                     the image is super clear
                   </span>
                   , on the case I had before the image started fading into
-                  yellow-ish color after a couple of weeks. Love it."
+                  yellow-ish color after a couple of weeks. Love it.&quot;
                 </p>
               }
               src="/users/user-1.png"
@@ -162,14 +164,14 @@ export default function Home() {
             <Testimonial
               text={
                 <p>
-                  "I usually keep my phone together with my keys in my pocket
-                  and that led to some pretty heavy scratchmarks on all of my
-                  last phone case. This one, besides a barley noticeable scratch
-                  on the corner,{" "}
+                  &quot;I usually keep my phone together with my keys in my
+                  pocket and that led to some pretty heavy scratchmarks on all
+                  of my last phone case. This one, besides a barley noticeable
+                  scratch on the corner,{" "}
                   <span className="p-0.5 bg-slate-800 text-white">
                     looks brand new after about half a year
                   </span>
-                  . I dig it."
+                  . I dig it.&quot;
                 </p>
               }
               src="/users/user-4.jpg"
